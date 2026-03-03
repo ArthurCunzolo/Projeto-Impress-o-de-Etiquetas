@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Envelopes DL - Cadastro de Remetente e Destinatários</title>
+    <meta name="description" content="Aplicação para cadastro de remetente e destinatários e geração de PDF para impressão em envelope DL.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon">✉</div>
+                <div>
+                    <h1>Envelope DL</h1>
+                    <p class="subtitle">Gerador de envelopes para impressão</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="tabs">
+            <button class="tab active" data-tab="remetente" id="tab-remetente">
+                <span class="tab-icon">✈</span>
+                Remetente
+            </button>
+            <button class="tab" data-tab="destinatario" id="tab-destinatario">
+                <span class="tab-icon">👤</span>
+                Destinatários
+                <span class="badge" id="badge-count" style="display:none;">0</span>
+            </button>
+        </nav>
+
+        <!-- Tab Content: Remetente -->
+        <section class="tab-content active" id="content-remetente">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📮 Dados do Remetente</h2>
+                    <p class="card-desc">Preencha os dados de quem está enviando a carta</p>
+                </div>
+                <form id="form-remetente" class="form-grid">
+                    <div class="field full">
+                        <label for="rem-nome">Nome completo</label>
+                        <input type="text" id="rem-nome" placeholder="Nome do remetente" required>
+                    </div>
+                    <div class="field-row">
+                        <div class="field flex-3">
+                            <label for="rem-cep">CEP</label>
+                            <div class="input-with-action">
+                                <input type="text" id="rem-cep" placeholder="00000-000" maxlength="9" required>
+                                <button type="button" class="btn-search-cep" onclick="buscarCEP('rem')">🔍</button>
+                            </div>
+                        </div>
+                        <div class="field flex-1">
+                            <label for="rem-uf">UF</label>
+                            <input type="text" id="rem-uf" placeholder="SP" maxlength="2" required>
+                        </div>
+                    </div>
+                    <div class="field full">
+                        <label for="rem-logradouro">Logradouro</label>
+                        <input type="text" id="rem-logradouro" placeholder="Rua, Avenida, etc." required>
+                    </div>
+                    <div class="field-row">
+                        <div class="field flex-1">
+                            <label for="rem-numero">Número</label>
+                            <input type="text" id="rem-numero" placeholder="Nº" required>
+                        </div>
+                        <div class="field flex-2">
+                            <label for="rem-complemento">Complemento</label>
+                            <input type="text" id="rem-complemento" placeholder="Apto, Sala...">
+                        </div>
+                    </div>
+                    <div class="field full">
+                        <label for="rem-bairro">Bairro</label>
+                        <input type="text" id="rem-bairro" placeholder="Bairro" required>
+                    </div>
+                    <div class="field full">
+                        <label for="rem-cidade">Cidade</label>
+                        <input type="text" id="rem-cidade" placeholder="Cidade" required>
+                    </div>
+                    <div class="field full actions">
+                        <button type="button" class="btn-primary" onclick="salvarRemetente()">
+                            💾 Salvar Remetente
+                        </button>
+                    </div>
+                    <div class="field full actions" style="margin-top: 8px;">
+                        <button type="button" class="btn-generate" onclick="gerarPDFRemetente()">
+                            📄 Gerar PDF do Remetente
+                        </button>
+                        <p class="generate-hint">Gera um PDF com os dados do remetente para impressão no verso do envelope DL</p>
+                    </div>
+                </form>
+            </div>
+            <div id="remetente-saved-msg" class="saved-msg" style="display:none;">
+                ✅ Remetente salvo com sucesso!
+            </div>
+        </section>
+
+        <!-- Tab Content: Destinatário -->
+        <section class="tab-content" id="content-destinatario">
+            <div class="card">
+                <div class="card-header">
+                    <h2>📬 Cadastrar Destinatário</h2>
+                    <p class="card-desc">Adicione os destinatários das cartas</p>
+                </div>
+                <form id="form-destinatario" class="form-grid">
+                    <div class="field full">
+                        <label for="dest-nome">Nome completo</label>
+                        <input type="text" id="dest-nome" placeholder="Nome do destinatário" required>
+                    </div>
+                    <div class="field-row">
+                        <div class="field flex-3">
+                            <label for="dest-cep">CEP</label>
+                            <div class="input-with-action">
+                                <input type="text" id="dest-cep" placeholder="00000-000" maxlength="9" required>
+                                <button type="button" class="btn-search-cep" onclick="buscarCEP('dest')">🔍</button>
+                            </div>
+                        </div>
+                        <div class="field flex-1">
+                            <label for="dest-uf">UF</label>
+                            <input type="text" id="dest-uf" placeholder="SP" maxlength="2" required>
+                        </div>
+                    </div>
+                    <div class="field full">
+                        <label for="dest-logradouro">Logradouro</label>
+                        <input type="text" id="dest-logradouro" placeholder="Rua, Avenida, etc." required>
+                    </div>
+                    <div class="field-row">
+                        <div class="field flex-1">
+                            <label for="dest-numero">Número</label>
+                            <input type="text" id="dest-numero" placeholder="Nº" required>
+                        </div>
+                        <div class="field flex-2">
+                            <label for="dest-complemento">Complemento</label>
+                            <input type="text" id="dest-complemento" placeholder="Apto, Sala...">
+                        </div>
+                    </div>
+                    <div class="field full">
+                        <label for="dest-bairro">Bairro</label>
+                        <input type="text" id="dest-bairro" placeholder="Bairro" required>
+                    </div>
+                    <div class="field full">
+                        <label for="dest-cidade">Cidade</label>
+                        <input type="text" id="dest-cidade" placeholder="Cidade" required>
+                    </div>
+                    <div class="field full actions">
+                        <button type="button" class="btn-secondary" onclick="adicionarDestinatario()">
+                            ➕ Adicionar Destinatário
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de destinatários -->
+            <div class="card list-card" id="lista-destinatarios-card" style="display:none;">
+                <div class="card-header">
+                    <h2>📋 Destinatários Cadastrados</h2>
+                    <p class="card-desc" id="dest-count-text">0 destinatários adicionados</p>
+                </div>
+                <div id="lista-destinatarios" class="dest-list"></div>
+            </div>
+
+            <!-- Gerar PDF Destinatários -->
+            <div class="generate-area" id="generate-area" style="display:none;">
+                <button class="btn-generate" onclick="gerarPDFDestinatarios()">
+                    📄 Gerar PDF dos Destinatários
+                </button>
+                <p class="generate-hint">Gera um PDF com os dados dos destinatários + selo postal para impressão na frente do envelope DL</p>
+            </div>
+        </section>
+    </div>
+
+    <!-- Preview canvas (hidden) for barcode -->
+    <canvas id="barcode-canvas" style="display:none;"></canvas>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
